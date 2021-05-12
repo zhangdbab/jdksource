@@ -6,6 +6,11 @@ import java.util.concurrent.Executors;
 
 /**
  * Created by DJ009828 on 2020/10/31 11:56
+ *
+ *执行流程
+ * 类初始化设置 status 的值2
+ * 调用countDown方法   status的值减 1
+ * 调用await方法，将当前线程加入同步队列当中，挂起当前线程，只有当status值为0时,线程被唤醒
  */
 public class CountDownLatchTest {
 
