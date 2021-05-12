@@ -181,7 +181,7 @@ public interface Lock {
      * circumstances and the exception type must be documented by that
      * {@code Lock} implementation.
      */
-    void lock();
+    void lock(); //
 
     /**
      * Acquires the lock unless the current thread is

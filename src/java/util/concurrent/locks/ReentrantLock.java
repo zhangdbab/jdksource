@@ -202,11 +202,11 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          * Performs lock.  Try immediate barge, backing up to normal
          * acquire on failure.
          */
-        final void lock() {
+        final void lock() { //非公平锁，上来先去获取锁 ， 判断status的状态是不是0 ，如果是0则获得锁，设置本线程为当前线程；若获取不成功，则再按照公平锁的处理方式进行处理
             if (compareAndSetState(0, 1))
-                setExclusiveOwnerThread(Thread.currentThread());
+                setExclusiveOwnerThread(Thread.currentThread()); //设置本线程为当前线程
             else
-                acquire(1);
+                acquire(1);  //若获取不成功，则再按照公平锁的处理方式进行处理
         }
 
         protected final boolean tryAcquire(int acquires) {
@@ -217,7 +217,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
     /**
      * Sync object for fair locks
      */
-    static final class FairSync extends Sync {
+    static final class FairSync extends Sync { //公平锁，获取锁不成功,加入等待队列当中
         private static final long serialVersionUID = -3000897897090466540L;
 
         final void lock() {
@@ -238,7 +238,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
                     return true;
                 }
             }
-            else if (current == getExclusiveOwnerThread()) {
+            else if (current == getExclusiveOwnerThread()) {//可重入锁的处理
                 int nextc = c + acquires;
                 if (nextc < 0)
                     throw new Error("Maximum lock count exceeded");

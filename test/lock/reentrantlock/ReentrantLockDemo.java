@@ -1,11 +1,12 @@
-package lock;
+package lock.reentrantlock;
 
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class MyLockTest  implements Runnable {
+public class ReentrantLockDemo implements Runnable {
     private  static  int count =0 ;
 
-    public MyLockTest(Lock lock) {
+    public ReentrantLockDemo(Lock lock) {
         this.lock = lock;
     }
 
@@ -16,8 +17,7 @@ public class MyLockTest  implements Runnable {
         lock.lock();
         try {
             Thread.sleep(1);
-            System.out.println("线程名称："+Thread.currentThread().getName());
-             count++;
+            count++;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }finally {
@@ -28,20 +28,14 @@ public class MyLockTest  implements Runnable {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        MyLock myLock =new MyLock();
+        ReentrantLock reentrantLock =new ReentrantLock(false);
 
-        for (int a=0;a<5;a++){
-            Thread thread =new Thread(new MyLockTest(myLock),"myThread:"+a);
-            thread.start();
+        for (int a=0;a<1000;a++){
+                Thread thread =new Thread(new ReentrantLockDemo(reentrantLock));
+                thread.start();
         }
-
-
-
-
-
 
         Thread.sleep(3000);
         System.out.println(count);
     }
-
 }

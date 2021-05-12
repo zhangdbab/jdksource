@@ -274,7 +274,7 @@ import sun.misc.Unsafe;
  *       return true;
  *     }
  *   }
- *
+ *http://ccp.djbx.com/workloads/Pod/istio-ingressgateway-5d667cf998-vz856/log
  *   private final Sync sync = new Sync();
  *   public boolean isSignalled() { return sync.isSignalled(); }
  *   public void signal()         { sync.releaseShared(1); }
@@ -1624,12 +1624,12 @@ public abstract class AbstractQueuedSynchronizer
 
     /**
      * Returns true if a node, always one that was initially placed on
-     * a condition queue, is now waiting to reacquire on sync queue.
+     * a condition queue, is now waiting to reacquire on sync queue 通常是节点初始
      * @param node the node
      * @return true if is reacquiring
      */
-    final boolean isOnSyncQueue(Node node) {
-        if (node.waitStatus == Node.CONDITION || node.prev == null)
+    final boolean isOnSyncQueue(Node node) { //判断节点是不是在同步队列中
+        if (node.waitStatus == Node.CONDITION || node.prev == null) //节点状态为-2 （ Node.CONDITION），或者前面为空 肯定不在
             return false;
         if (node.next != null) // If has successor, it must be on queue
             return true;
@@ -1641,7 +1641,7 @@ public abstract class AbstractQueuedSynchronizer
          * unless the CAS failed (which is unlikely), it will be
          * there, so we hardly ever traverse much.
          */
-        return findNodeFromTail(node);
+        return findNodeFromTail(node); //兜底方法，遍历等待队列中的节点 ，看等待队列中的节点是否和当前节点一样。不一样，表示没有在等待队列中返回false
     }
 
     /**
@@ -1661,7 +1661,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
-     * Transfers a node from a condition queue onto sync queue.
+     * Transfers a node from a condition queue onto sync queue.  将一个node从
      * Returns true if successful.
      * @param node the node
      * @return true if successfully transferred (else the node was
@@ -1680,7 +1680,7 @@ public abstract class AbstractQueuedSynchronizer
          * attempt to set waitStatus fails, wake up to resync (in which
          * case the waitStatus can be transiently and harmlessly wrong).
          */
-        Node p = enq(node);
+        Node p = enq(node);//加入同步队列
         int ws = p.waitStatus;
         if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
             LockSupport.unpark(node.thread);
@@ -1845,14 +1845,14 @@ public abstract class AbstractQueuedSynchronizer
          * Adds a new waiter to wait queue.
          * @return its new wait node
          */
-        private Node addConditionWaiter() {
+        private Node addConditionWaiter() {//添加到等待队列中 waitStatus =-2
             Node t = lastWaiter;
             // If lastWaiter is cancelled, clean out.
             if (t != null && t.waitStatus != Node.CONDITION) {
                 unlinkCancelledWaiters();
                 t = lastWaiter;
             }
-            Node node = new Node(Thread.currentThread(), Node.CONDITION);
+            Node node = new Node(Thread.currentThread(), Node.CONDITION); //定义了node节点的状态为-2 ，表明  thread is waiting on condition
             if (t == null)
                 firstWaiter = node;
             else
@@ -2029,23 +2029,23 @@ public abstract class AbstractQueuedSynchronizer
          * <li> If interrupted while blocked in step 4, throw InterruptedException.
          * </ol>
          */
-        public final void await() throws InterruptedException {
-            if (Thread.interrupted())
+        public final void await() throws InterruptedException { // 阻塞当前线程，直接被唤醒或被中断
+            if (Thread.interrupted())   // 如果当前线程被中断过，则抛出中断异常
                 throw new InterruptedException();
-            Node node = addConditionWaiter();
-            int savedState = fullyRelease(node);
-            int interruptMode = 0;
-            while (!isOnSyncQueue(node)) {
-                LockSupport.park(this);
-                if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)
+            Node node = addConditionWaiter();   // 添加一个waitStatus为CONDITION的节点到条件队列尾部
+            int savedState = fullyRelease(node);    // 释放操作。  只有释放了锁，其他线程才能调用lock方法 ，成功获取到锁  我们知道只有在拥有锁（acquire成功）的时候才能调用await()方法，因此，调用await()方法的线程的节点必然是同步队列的头节点。所以，当调用await()方法时，相当于同步队列的首节点（获取了锁的节点）移动到Condition的条件队列中。
+            int interruptMode = 0;  // 0为正常，被中断值为THROW_IE或REINTERRUPT
+            while (!isOnSyncQueue(node)) {  // isOnSyncQueue： ，判断node是否在同步队列（注意和条件队列区分。调用signal方法会将节点从条件队列移动到同步队列，因此这边就可以跳出while循环）
+                LockSupport.park(this); // node如果不在同步队列则进行park（阻塞当前线程）
+                if ((interruptMode = checkInterruptWhileWaiting(node)) != 0)    // 检查线程被唤醒是否是因为被中断，如果是则跳出循环，否则会进行下一次循环，因为被唤醒前提是进入同步队列，所以下一次循环也必然会跳出循环
                     break;
             }
-            if (acquireQueued(node, savedState) && interruptMode != THROW_IE)
+            if (acquireQueued(node, savedState) && interruptMode != THROW_IE)   // acquireQueued返回true代表被中断过，如果中断模式不是THROW_IE，则必然为REINTERRUPT（见上面的checkInterruptWhileWaiting方法）
                 interruptMode = REINTERRUPT;
             if (node.nextWaiter != null) // clean up if cancelled
-                unlinkCancelledWaiters();
-            if (interruptMode != 0)
-                reportInterruptAfterWait(interruptMode);
+                unlinkCancelledWaiters();   // 移除waitStatus为CANCELLED的节点
+            if (interruptMode != 0) // 如果跳出while循环是因为被中断
+                reportInterruptAfterWait(interruptMode);    // 则根据interruptMode，选择抛出InterruptedException 或 重新中断当前线程
         }
 
         /**

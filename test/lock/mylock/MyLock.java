@@ -1,4 +1,4 @@
-package lock;
+package lock.mylock;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer;
@@ -56,7 +56,7 @@ public class MyLock implements Lock {
             boolean flag = false;
 
             if (state == 0) {
-                setExclusiveOwnerThread(null);
+                setExclusiveOwnerThread(null); //设置线程拥有则为空
                 flag = true;
             }
 
