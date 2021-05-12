@@ -987,14 +987,14 @@ public abstract class AbstractQueuedSynchronizer
                 if (p == head) {
                     int r = tryAcquireShared(arg);
                     if (r >= 0) {
-                        setHeadAndPropagate(node, r);
+                        setHeadAndPropagate(node, r); //获取成功，唤醒线程
                         p.next = null; // help GC
                         failed = false;
                         return;
                     }
                 }
                 if (shouldParkAfterFailedAcquire(p, node) &&
-                    parkAndCheckInterrupt())
+                    parkAndCheckInterrupt()) //获取锁失败线程挂起
                     throw new InterruptedException();
             }
         } finally {
@@ -1300,8 +1300,8 @@ public abstract class AbstractQueuedSynchronizer
             throws InterruptedException {
         if (Thread.interrupted())
             throw new InterruptedException();
-        if (tryAcquireShared(arg) < 0)
-            doAcquireSharedInterruptibly(arg);
+        if (tryAcquireShared(arg) < 0)  // 根据stats的状态返回，如果是0 则返回1 否则则返回-1
+            doAcquireSharedInterruptibly(arg); //获取锁不成功
     }
 
     /**
@@ -1683,7 +1683,7 @@ public abstract class AbstractQueuedSynchronizer
         Node p = enq(node);//加入同步队列
         int ws = p.waitStatus;
         if (ws > 0 || !compareAndSetWaitStatus(p, ws, Node.SIGNAL))
-            LockSupport.unpark(node.thread);
+            LockSupport.unpark(node.thread); //唤醒当前线程
         return true;
     }
 
