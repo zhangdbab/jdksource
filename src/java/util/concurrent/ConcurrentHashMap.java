@@ -1009,26 +1009,26 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /** Implementation for put and putIfAbsent */
     final V putVal(K key, V value, boolean onlyIfAbsent) {
         if (key == null || value == null) throw new NullPointerException();
-        int hash = spread(key.hashCode());
+        int hash = spread(key.hashCode()); //计算hashcode
         int binCount = 0;
         for (Node<K,V>[] tab = table;;) {
             Node<K,V> f; int n, i, fh;
             if (tab == null || (n = tab.length) == 0)
-                tab = initTable();
-            else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {
+                tab = initTable(); // 初始化数组
+            else if ((f = tabAt(tab, i = (n - 1) & hash)) == null) {// 通过取模运算，计算元素插入的位置 ，为空则直接插入
                 if (casTabAt(tab, i, null,
-                             new Node<K,V>(hash, key, value, null)))
+                             new Node<K,V>(hash, key, value, null))) //插入元素
                     break;                   // no lock when adding to empty bin
             }
             else if ((fh = f.hash) == MOVED)
                 tab = helpTransfer(tab, f);
-            else {
+            else {//  通过取模运算，计算元素插入的位置 ，不为空做链表或者红黑树插入操作
                 V oldVal = null;
-                synchronized (f) {
+                synchronized (f) { // 当前数组位置进行加锁
                     if (tabAt(tab, i) == f) {
-                        if (fh >= 0) {
+                        if (fh >= 0) { //1、链表类型处理
                             binCount = 1;
-                            for (Node<K,V> e = f;; ++binCount) {
+                            for (Node<K,V> e = f;; ++binCount) {  //当执行插入第九个元素的时候， 仍然进入此循环当中
                                 K ek;
                                 if (e.hash == hash &&
                                     ((ek = e.key) == key ||
@@ -1046,7 +1046,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                                 }
                             }
                         }
-                        else if (f instanceof TreeBin) {
+                        else if (f instanceof TreeBin) { //2、红黑树类型处理
                             Node<K,V> p;
                             binCount = 2;
                             if ((p = ((TreeBin<K,V>)f).putTreeVal(hash, key,
@@ -1059,8 +1059,8 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                     }
                 }
                 if (binCount != 0) {
-                    if (binCount >= TREEIFY_THRESHOLD)
-                        treeifyBin(tab, i);
+                    if (binCount >= TREEIFY_THRESHOLD)  // 第九个元素开始转化为红黑树
+                        treeifyBin(tab, i); //转化为红黑树
                     if (oldVal != null)
                         return oldVal;
                     break;
@@ -2281,7 +2281,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                         transferIndex <= 0)
                         break;
                     if (U.compareAndSwapInt(this, SIZECTL, sc, sc + 1))
-                        transfer(tab, nt);
+                        transfer(tab, nt); //转化为红黑树
                 }
                 else if (U.compareAndSwapInt(this, SIZECTL, sc,
                                              (rs << RESIZE_STAMP_SHIFT) + 2))

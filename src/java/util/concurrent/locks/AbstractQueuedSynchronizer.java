@@ -987,7 +987,7 @@ public abstract class AbstractQueuedSynchronizer
                 if (p == head) {
                     int r = tryAcquireShared(arg);
                     if (r >= 0) {
-                        setHeadAndPropagate(node, r); //获取成功，唤醒线程
+                        setHeadAndPropagate(node, r); //获取成功，唤醒线程  独占锁某个节点被唤醒之后，它只需要将这个节点设置成head就完事了，而共享锁不一样，某个节点被设置为head之后，如果它的后继节点是SHARED状态的，那么将继续通过doReleaseShared方法尝试往后唤醒节点，实现了共享状态的向后传播。
                         p.next = null; // help GC
                         failed = false;
                         return;
